@@ -73,13 +73,36 @@ class BaseBackend(ABC):
         """Whether this backend supports PD disagg."""
         return False
 
+    def is_connected_pd(self, p_url: str, d_url: str) -> bool:
+        """Check if a PD connection exists between two nodes."""
+        return False
+
+    async def connect_pd(self, p_url: str, d_url: str) -> None:
+        """Establish a PD connection between two nodes."""
+        raise NotImplementedError('This backend does not support PD disagg.')
+
+    def shelf_prefill_session(self, p_url: str, d_url: str, session_id: str) -> None:
+        """Shelf a prefill session (backend-specific bookkeeping)."""
+        return
+
+    def unshelf_prefill_session(self, p_url: str, d_url: str, session_id: str) -> None:
+        """Unshelf a prefill session (backend-specific bookkeeping)."""
+        return
+
     async def prefill_request(
         self,
         node_url: str,
         endpoint: str,
         request_data: dict[str, Any],
+        d_url: Optional[str] = None,
     ) -> Optional[dict[str, Any]]:
         """Send a prefill-only request (PD disagg).
+
+        Args:
+            node_url: P node URL.
+            endpoint: API endpoint path.
+            request_data: Request payload.
+            d_url: D node URL (optional, for request_id generation).
 
         Returns:
             Prefill result info dict, or None.

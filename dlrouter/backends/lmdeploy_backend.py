@@ -139,6 +139,7 @@ class LMDeployBackend(BaseBackend):
         node_url: str,
         endpoint: str,
         request_data: dict[str, Any],
+        d_url: Optional[str] = None,
     ) -> Optional[dict[str, Any]]:
         """Send prefill-only request to P node."""
         prefill_data = copy.deepcopy(request_data)

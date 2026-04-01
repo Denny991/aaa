@@ -8,6 +8,8 @@ from dlrouter.constants import (
     BackendType,
     RoutingStrategy,
     ServingStrategy,
+    ZMQ_DEFAULT_PING_SECONDS,
+    ZMQ_DEFAULT_PORT,
 )
 
 
@@ -35,6 +37,19 @@ class SSLConfig(BaseModel):
     certfile: Optional[str] = None
 
 
+class ZMQDiscoveryConfig(BaseModel):
+    """ZMQ service discovery config for vLLM PD disaggregation.
+
+    When enabled, DLRouter listens for ZMQ heartbeat messages
+    from vLLM P/D nodes and automatically registers them.
+    """
+
+    enabled: bool = False
+    hostname: str = '0.0.0.0'
+    port: int = ZMQ_DEFAULT_PORT
+    ping_seconds: int = ZMQ_DEFAULT_PING_SECONDS
+
+
 class RouterConfig(BaseModel):
     """Top-level router configuration."""
 
@@ -45,6 +60,7 @@ class RouterConfig(BaseModel):
     backend: BackendConfig = Field(default_factory=BackendConfig)
     pd_config: LMDeployPDConfig = Field(default_factory=LMDeployPDConfig)
     ssl: SSLConfig = Field(default_factory=SSLConfig)
+    zmq_discovery: ZMQDiscoveryConfig = Field(default_factory=ZMQDiscoveryConfig)
     api_keys: Optional[list[str]] = None
     log_level: str = 'INFO'
     cache_status: bool = True

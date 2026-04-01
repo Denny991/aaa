@@ -14,6 +14,14 @@ Examples:
 
     # With PD disaggregation
     python -m dlrouter --serving_strategy distserve
+
+    # With vLLM PD disaggregation and ZMQ service discovery
+    python -m dlrouter \
+        --backend vllm \
+        --serving_strategy distserve \
+        --zmq_discovery_enabled \
+        --zmq_discovery_port 30001 \
+        --server_port 10001
 """
 
 import os
@@ -28,11 +36,14 @@ from dlrouter.config import (
     LMDeployPDConfig,
     RouterConfig,
     SSLConfig,
+    ZMQDiscoveryConfig,
 )
 from dlrouter.constants import (
     BackendType,
     RoutingStrategy,
     ServingStrategy,
+    ZMQ_DEFAULT_PING_SECONDS,
+    ZMQ_DEFAULT_PORT,
 )
 from dlrouter.logger import get_logger
 
@@ -61,6 +72,11 @@ def serve(
     link_type: Literal['RoCE', 'IB'] = 'RoCE',
     with_gdr: bool = True,
     dummy_prefill: bool = False,
+    # ZMQ service discovery options (for vLLM PD disaggregation)
+    zmq_discovery_enabled: bool = False,
+    zmq_discovery_hostname: str = '0.0.0.0',
+    zmq_discovery_port: int = ZMQ_DEFAULT_PORT,
+    zmq_discovery_ping_seconds: int = ZMQ_DEFAULT_PING_SECONDS,
 ):
     """Launch the DLRouter proxy server.
 
@@ -81,6 +97,11 @@ def serve(
         link_type: RDMA link type.
         with_gdr: Enable GPU Direct RDMA.
         dummy_prefill: Use dummy prefill for testing.
+        zmq_discovery_enabled: Enable ZMQ service discovery
+            for vLLM P/D nodes.
+        zmq_discovery_hostname: ZMQ bind hostname.
+        zmq_discovery_port: ZMQ bind port. Default 30001.
+        zmq_discovery_ping_seconds: Heartbeat expiration seconds.
     """
     # Parse api_keys
     if isinstance(api_keys, str):
@@ -100,6 +121,12 @@ def serve(
             dummy_prefill=dummy_prefill,
         ),
         ssl=SSLConfig(enabled=ssl),
+        zmq_discovery=ZMQDiscoveryConfig(
+            enabled=zmq_discovery_enabled,
+            hostname=zmq_discovery_hostname,
+            port=zmq_discovery_port,
+            ping_seconds=zmq_discovery_ping_seconds,
+        ),
         api_keys=api_keys,
         log_level=log_level,
         cache_status=not disable_cache_status,

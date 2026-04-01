@@ -86,20 +86,40 @@ def create_app(
     # Health checker
     health_checker = HealthChecker(node_manager)
 
+    # ZMQ service discovery (optional, for vLLM PD disaggregation)
+    zmq_discovery = None
+    if config.zmq_discovery.enabled:
+        from dlrouter.core.zmq_discovery import ZMQServiceDiscovery
+
+        zmq_discovery = ZMQServiceDiscovery(
+            node_manager,
+            hostname=config.zmq_discovery.hostname,
+            port=config.zmq_discovery.port,
+            ping_seconds=config.zmq_discovery.ping_seconds,
+        )
+        # Pass ZMQ discovery to VLLMBackend for request_id generation
+        if hasattr(backend, 'set_zmq_discovery'):
+            backend.set_zmq_discovery(zmq_discovery)
+
     @app.on_event('startup')
     async def on_startup():
         health_checker.start()
+        if zmq_discovery:
+            zmq_discovery.start()
         logger.info('DLRouter started.')
 
     @app.on_event('shutdown')
     async def on_shutdown():
         health_checker.stop()
+        if zmq_discovery:
+            zmq_discovery.stop()
         logger.info('DLRouter stopped.')
 
     # Store references on app for external access
     app.state.node_manager = node_manager
     app.state.proxy_engine = proxy_engine
     app.state.health_checker = health_checker
+    app.state.zmq_discovery = zmq_discovery
     app.state.config = config
 
     return app

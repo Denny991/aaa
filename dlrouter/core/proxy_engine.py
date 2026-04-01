@@ -166,6 +166,11 @@ class ProxyEngine:
         pd_cfg = getattr(self.backend, 'pd_config', None)
         dummy_prefill = pd_cfg.dummy_prefill if pd_cfg else False
 
+        # Get D node URL first (needed for request_id generation in prefill)
+        d_url = self.manager.get_node_url(model_name, EngineRole.DECODE, request_key)
+        if not d_url:
+            return self._model_not_found_response(model_name)
+
         # Prefill phase
         prefill_info = {}
         p_url = 'dummy:dummy'
@@ -179,13 +184,11 @@ class ProxyEngine:
                 return self._model_not_found_response(model_name)
             logger.info(f'Prefill dispatched to {p_url}')
             start_p = self.manager.pre_call(p_url)
-            prefill_info = (await self.backend.prefill_request(p_url, endpoint, request_data)) or {}
+            # Pass d_url for request_id generation (vLLM official format)
+            prefill_info = (await self.backend.prefill_request(p_url, endpoint, request_data, d_url=d_url)) or {}
             self.manager.post_call(p_url, start_p)
 
         # Decode phase
-        d_url = self.manager.get_node_url(model_name, EngineRole.DECODE, request_key)
-        if not d_url:
-            return self._model_not_found_response(model_name)
         logger.info(f'Decode dispatched to {d_url}')
 
         # PD connection

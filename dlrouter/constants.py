@@ -19,6 +19,10 @@ HEALTH_CHECK_TIMEOUT = int(os.getenv('DLROUTER_HEALTH_CHECK_TIMEOUT', '30'))
 # Number of consecutive health check failures before removing a node
 HEALTH_CHECK_MAX_FAILURES = int(os.getenv('DLROUTER_HEALTH_CHECK_MAX_FAILURES', '3'))
 
+# ZMQ service discovery defaults (for vLLM PD disaggregation)
+ZMQ_DEFAULT_PORT = int(os.getenv('DLROUTER_ZMQ_PORT', '30001'))
+ZMQ_DEFAULT_PING_SECONDS = int(os.getenv('DLROUTER_ZMQ_PING_SECONDS', '5'))
+
 
 class RoutingStrategy(str, enum.Enum):
     """Supported routing strategies."""
